@@ -1,59 +1,59 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import java.awt.Graphics;
 
 public class Canvas extends JPanel {
-    long duration;
+    long startTime;
+    int width;
+    int height;
+    JFrame frame;
+    BufferedImage image;
+    BufferStrategy bufferStrategy;
 
-    private BufferedImage image;
-
-    public PixelDrawing(long duration) {
-        this.duration = duration;
-        image = new BufferedImage(1800, 1200, BufferedImage.TYPE_INT_RGB);
-        drawPixels();
+    public Canvas(int width, int height) {
+        frame = new JFrame("Pixel Drawing");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.width = width;
+        this.height = height;
+        startTime = System.nanoTime();
+        frame.setSize(width, height);
+        frame.add(this);
+        frame.setVisible(true);
+        frame.createBufferStrategy(2); // Create a double buffer strategy
+        bufferStrategy = frame.getBufferStrategy();
+        image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }
 
-    private void drawPixels() {
-        for (int x = 0; x < image.getWidth(); x++) {
-            for (int y = 0; y < image.getHeight(); y++) {
-                int red = 0;
-                int blue = 0;
-                int green = 0;
-                int brightness = 0;
-                brightness = (int) duration % 256;
-                red = brightness;
-                blue = brightness;
-                green = brightness;
-                int color = (red << 16) | (green << 8) | blue;
-                image.setRGB(x, y, color);
-            }
-        }
+    public void setRGB(int x, int y, int red, int green, int blue) {
+        int color = (red << 16) | (green << 8) | blue;
+        image.setRGB(x, y, color);
     }
 
+    public void setBW(int x, int y, int brightness) {
+        int color = (brightness << 16) | (brightness << 8) | brightness;
+        image.setRGB(x, y, color);
+    }
+
+    public long getTime() {
+        return System.nanoTime() - startTime;
+    }
+
+    public void update() {
+        render();
+    }
+
+    //I don't really understand the following two methods
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawImage(image, 0, 0, this);
     }
 
-    public static JFrame init(int width, int height) {
-        JFrame frame = new JFrame("Pixel Drawing");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(width, height);
-        long startTime = System.nanoTime();
-        return frame;
-    }
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Pixel Drawing");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 800);
-        while (true) {
-            long duration = (long) Math.round((System.nanoTime() - startTime) / 10000000.0);
-            if (duration % 1 == 0) {
-                frame.add(new PixelDrawing(duration));
-                frame.setVisible(true);
-            }
-        }
+    public void render() {
+        Graphics g = bufferStrategy.getDrawGraphics();
+        paintComponent(g);
+        g.dispose();
+        bufferStrategy.show();
     }
 }
