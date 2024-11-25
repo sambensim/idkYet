@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 
-public class Canvas extends JPanel {
+public class Drawing extends JPanel {
     long startTime;
     int width;
     int height;
@@ -11,8 +11,8 @@ public class Canvas extends JPanel {
     BufferedImage image;
     BufferStrategy bufferStrategy;
 
-    public Canvas(int width, int height) {
-        frame = new JFrame("Pixel Drawing");
+    public Drawing(int width, int height) {
+        frame = new JFrame("Drawing");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.width = width;
         this.height = height;
@@ -25,14 +25,20 @@ public class Canvas extends JPanel {
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }
 
-    public void setRGB(int x, int y, int red, int green, int blue) {
-        int color = (red << 16) | (green << 8) | blue;
-        image.setRGB(x, y, color);
+    public void setPixel(int x, int y, Color color) {
+        image.setRGB(x, y, color.getCode());
     }
 
-    public void setBW(int x, int y, int brightness) {
-        int color = (brightness << 16) | (brightness << 8) | brightness;
-        image.setRGB(x, y, color);
+    public void rect(int x1, int y1, int x2, int y2, Color color) {
+        for (int x = x1; x < x2; x++) {
+            for (int y = y1; y < y2; y++) {
+                setPixel(x, y, color);
+            }
+        }
+    }
+
+    public void fill(Color color) {
+        rect(0, 0, width, height, color);
     }
 
     public long getTime() {
