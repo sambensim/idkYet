@@ -2,6 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Drawing extends JPanel {
     long startTime;
@@ -10,6 +13,7 @@ public class Drawing extends JPanel {
     JFrame frame;
     BufferedImage image;
     BufferStrategy bufferStrategy;
+    ExecutorService executorService;
 
     public Drawing(int width, int height) {
         frame = new JFrame("Drawing");
@@ -23,6 +27,45 @@ public class Drawing extends JPanel {
         frame.createBufferStrategy(2); // Create a double buffer strategy
         bufferStrategy = frame.getBufferStrategy();
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    }
+
+    public void setAllThreaded(Class<? extends PixelFunction> functionClass) throws Exception {
+        int totalTasks = width * height;
+        CountDownLatch latch = new CountDownLatch(totalTasks);
+        double cTime = getTime();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                PixelInfo pixelInfo = new PixelInfo(x, y, 0, this, cTime);
+                PixelFunction function = functionClass
+                    .getConstructor(PixelInfo.class)
+                    .newInstance(pixelInfo)
+                ;
+                executorService.submit(() -> {
+                    try {
+                        function.run();
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+        }
+        latch.await();
+    }
+
+        public void setAll(Class<? extends PixelFunction> functionClass) throws Exception {
+            double cTime = getTime();
+    
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    PixelInfo pixelInfo = new PixelInfo(x, y, 0, this, cTime);
+                    PixelFunction function = functionClass
+                        .getConstructor(PixelInfo.class)
+                        .newInstance(pixelInfo)
+                    ;
+                    function.run();
+                }
+            }
     }
 
     public void setPixel(int x, int y, Color color) {
@@ -41,8 +84,8 @@ public class Drawing extends JPanel {
         rect(0, 0, width, height, color);
     }
 
-    public long getTime() {
-        return System.nanoTime() - startTime;
+    public double getTime() {
+        return (System.nanoTime() - startTime) / 1000000;
     }
 
     public void update() {
