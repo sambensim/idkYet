@@ -28,6 +28,6 @@ public class Shapes {
     }
 
     public void fill(Color color) {
-        rect(0, 0, context.width, context.height, color);
+        rect(0 + context.xDiff, 0 + context.yDiff, context.width + context.xDiff, context.height + context.yDiff, color);
     }
 }

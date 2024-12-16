@@ -42,15 +42,15 @@ public class Drawing extends JPanel {
         yDiff = -yChange;
     }
 
-    public void setAllThreaded(Class<? extends PixelFunction> functionClass) throws Exception {
+    public void setAllThreaded(Class<? extends PixelFunction> functionClass, String[][] instructions) throws Exception {
         int totalTasks = width * height;
         CountDownLatch latch = new CountDownLatch(totalTasks);
         cTime = getTime();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 PixelFunction function = functionClass
-                    .getConstructor(PixelInfo.class)
-                    .newInstance(getPixel(x, y))
+                    .getConstructor(PixelInfo.class, String[][].class)
+                    .newInstance(getPixel(x, y), instructions)
                 ;
                 executorService.submit(() -> {
                     try {

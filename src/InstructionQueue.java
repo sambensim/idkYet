@@ -1,7 +1,8 @@
 public class InstructionQueue {
     String[][] instructions;
+    String[][] lastInstructions;
 
-    InstructionQueue() {
+    public InstructionQueue() {
         instructions = new String[0][];
     }
 
@@ -16,5 +17,26 @@ public class InstructionQueue {
             instructions[i] = temp[i];
         }
         instructions[temp.length] = value;
+    }
+
+    public void clear() {
+        lastInstructions = instructions;
+        instructions = new String[0][];
+    }
+
+    public String[][] compress() {
+        int offset = 0;
+        for (int i = 0; i < instructions.length && i < lastInstructions.length; i++) {
+            if (instructions[i].equals(lastInstructions[i])) {
+                offset++;
+            } else {
+                break;
+            }
+        }
+        String[][] compressedInstructions = new String[instructions.length - offset][];
+        for (int i = 0; i < compressedInstructions.length; i++) {
+            compressedInstructions[i] = instructions[i + offset];
+        }
+        return compressedInstructions;
     }
 }
