@@ -8,12 +8,15 @@ import java.util.concurrent.Executors;
 
 public class Drawing extends JPanel {
     long startTime;
+    double cTime;
     int width;
     int height;
     JFrame frame;
     BufferedImage image;
     BufferStrategy bufferStrategy;
     ExecutorService executorService;
+    int xDiff = 0;
+    int yDiff = 0;
 
     public Drawing(int width, int height) {
         frame = new JFrame("Drawing");
@@ -30,16 +33,24 @@ public class Drawing extends JPanel {
         executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
+    public PixelInfo getPixel(int x, int y) {
+        return new PixelInfo(this, x + xDiff, y + yDiff, Color.BLACK, cTime);
+    }
+
+    public void transpose(int xChange, int yChange) {
+        xDiff = -xChange;
+        yDiff = -yChange;
+    }
+
     public void setAllThreaded(Class<? extends PixelFunction> functionClass) throws Exception {
         int totalTasks = width * height;
         CountDownLatch latch = new CountDownLatch(totalTasks);
-        double cTime = getTime();
+        cTime = getTime();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                PixelInfo pixelInfo = new PixelInfo(x, y, 0, this, cTime);
                 PixelFunction function = functionClass
                     .getConstructor(PixelInfo.class)
-                    .newInstance(pixelInfo)
+                    .newInstance(getPixel(x, y))
                 ;
                 executorService.submit(() -> {
                     try {
@@ -53,35 +64,27 @@ public class Drawing extends JPanel {
         latch.await();
     }
 
-        public void setAll(Class<? extends PixelFunction> functionClass) throws Exception {
-            double cTime = getTime();
-    
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    PixelInfo pixelInfo = new PixelInfo(x, y, 0, this, cTime);
-                    PixelFunction function = functionClass
-                        .getConstructor(PixelInfo.class)
-                        .newInstance(pixelInfo)
-                    ;
-                    function.run();
-                }
-            }
-    }
+    public void setAll(Class<? extends PixelFunction> functionClass, String[][] instructions) throws Exception {
+        cTime = getTime();
 
-    public void setPixel(int x, int y, Color color) {
-        image.setRGB(x, y, color.getCode());
-    }
-
-    public void rect(int x1, int y1, int x2, int y2, Color color) {
-        for (int x = x1; x < x2; x++) {
-            for (int y = y1; y < y2; y++) {
-                setPixel(x, y, color);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                PixelFunction function = functionClass
+                    .getConstructor(PixelInfo.class, String[][].class)
+                    .newInstance(getPixel(x, y), instructions)
+                ;
+                function.run();
             }
         }
     }
 
-    public void fill(Color color) {
-        rect(0, 0, width, height, color);
+    public void setPixel(int x, int y, Color color) {
+        x -= xDiff;
+        y -= yDiff;
+        if (x < 0 || x >= width || y < 0 || y >= height) {
+            return ;
+        }
+        image.setRGB(x, y, color.getCode());
     }
 
     public double getTime() {

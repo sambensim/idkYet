@@ -1,15 +1,21 @@
 public class PixelInfo {
     public int x;
     public int y;
-    public int color;
+    public Color color;
     public Drawing context;
     public double time;
 
-    PixelInfo(int x, int y, int color, Drawing context, double time) {
+    PixelInfo(Drawing context, int x, int y) {
+        this.context = context;
+        this.x = x;
+        this.y = y;
+    }
+
+    PixelInfo(Drawing context, int x, int y, Color color, double time) {
+        this.context = context;
         this.x = x;
         this.y = y;
         this.color = color;
-        this.context = context;
         this.time = time;
     }
 }
